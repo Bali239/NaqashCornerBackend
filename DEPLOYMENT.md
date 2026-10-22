@@ -25,7 +25,7 @@ Set these environment variables in Render. Keep credentials in the dashboard, ne
 | `CLIENT_URL` | Production Vercel URL, for example `https://your-store.vercel.app` |
 | `GOOGLE_CLIENT_ID` | OAuth web client ID |
 | `GOOGLE_CLIENT_SECRET` | OAuth web client secret |
-| `GOOGLE_REDIRECT_URI` | `https://YOUR-RENDER-SERVICE.onrender.com/api/auth/google/callaback` |
+| `GOOGLE_REDIRECT_URI` | `https://naqashcornerbackend.onrender.com/api/auth/google/callaback` |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name |
 | `CLOUDINARY_API_KEY` | Cloudinary API key |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret |
@@ -49,7 +49,7 @@ Set this Vercel environment variable for **Production**:
 
 | Variable | Value |
 | --- | --- |
-| `NEXT_PUBLIC_API_URL` | `https://YOUR-RENDER-SERVICE.onrender.com` |
+| `NEXT_PUBLIC_API_URL` | `https://naqashcornerbackend.onrender.com` |
 
 `NEXT_PUBLIC_API_URL` is embedded in the client bundle at build time, so redeploy after changing it.
 
@@ -58,10 +58,10 @@ Set this Vercel environment variable for **Production**:
 In the Google Cloud OAuth web client, add this exact **Authorized redirect URI** (replace the Render service name):
 
 ```text
-https://YOUR-RENDER-SERVICE.onrender.com/api/auth/google/callaback
+https://naqashcornerbackend.onrender.com/api/auth/google/callaback
 ```
 
-The callback path intentionally retains the project's existing spelling `callaback`. The OAuth client ID and secret belong in Render only; do not put the client secret in Vercel.
+The callback path intentionally retains the project's existing spelling `callaback`. This URL must use the Render backend host; `CLIENT_URL` is the Vercel frontend origin that receives the user after the callback. The OAuth client ID and secret belong in Render only; do not put the client secret in Vercel.
 
 After Vercel gives you the production URL, set that exact URL as Render's `CLIENT_URL` and redeploy the backend. This is also the allowed browser origin for the API's CORS policy. Then redeploy the frontend with the Render API URL and test `/health`, product listing, Google sign-in, and an admin sign-in.
 

@@ -19,6 +19,15 @@ const envSchema = z.object({
   SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(7),
   MAX_IMAGE_SIZE_BYTES: z.coerce.number().int().min(1024).max(20 * 1024 * 1024).default(5 * 1024 * 1024),
   MAX_PRODUCT_IMAGES: z.coerce.number().int().min(1).max(20).default(8),
+}).superRefine((values, context) => {
+  const callback = new URL(values.GOOGLE_REDIRECT_URI);
+  const frontend = new URL(values.CLIENT_URL);
+  if (callback.pathname !== "/api/auth/google/callaback") {
+    context.addIssue({ code: "custom", path: ["GOOGLE_REDIRECT_URI"], message: "Must end with /api/auth/google/callaback" });
+  }
+  if (callback.origin === frontend.origin) {
+    context.addIssue({ code: "custom", path: ["GOOGLE_REDIRECT_URI"], message: "Must point to the backend origin, not CLIENT_URL" });
+  }
 });
 
 const parsed = envSchema.safeParse(process.env);
