@@ -1,12 +1,35 @@
+import { randomUUID } from "node:crypto";
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import { env } from "./config/env.js";
 import authRouter from "./routes/auth.js";
+import productsRouter from "./routes/products.js";
+import categoriesRouter from "./routes/categories.js";
+import cartRouter from "./routes/cart.js";
+import ordersRouter from "./routes/orders.js";
+import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
+import { sendSuccessResponse } from "./utils/Response.js";
 
 const app = express();
-
-app.use(express.json());
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:3000", credentials: false, allowedHeaders: ["Content-Type", "Authorization"] }));
-app.use("/api/auth", authRouter);
-app.get("/health", (_req, res) => res.json({ status: "ok" }));
+app.disable("x-powered-by");
+app.use((req, res, next) => {
+  req.id = req.get("x-request-id")?.slice(0, 100) || randomUUID();
+  res.setHeader("X-Request-Id", req.id);
+  next();
+});
+app.use(helmet());
+app.use(cors({ origin: env.CLIENT_URL, credentials: false, allowedHeaders: ["Content-Type", "Authorization", "X-Request-Id"] }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: false, limit: "1mb" }));
+app.use("/api/auth", rateLimit({ windowMs: 15 * 60 * 1000, limit: 100, standardHeaders: "draft-8", legacyHeaders: false }), authRouter);
+app.use("/api/products", productsRouter);
+app.use("/api/categories", categoriesRouter);
+app.use("/api/cart", cartRouter);
+app.use("/api/orders", ordersRouter);
+app.get("/health", (_req, res) => sendSuccessResponse(res, { message: "Server is healthy.", data: { status: "ok" } }));
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export default app;

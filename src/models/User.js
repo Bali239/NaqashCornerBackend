@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   photoUrl: { type: String, default: "" },
   provider: { type: String, default: "google" },
   emailVerified: { type: Boolean, default: false },
+  role: { type: String, enum: ["customer", "admin"], default: "customer", index: true },
   lastLoginAt: { type: Date, default: null },
 }, { timestamps: true });
 
