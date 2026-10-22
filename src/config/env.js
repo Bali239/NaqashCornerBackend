@@ -21,19 +21,18 @@ const envSchema = z.object({
   MAX_PRODUCT_IMAGES: z.coerce.number().int().min(1).max(20).default(8),
 }).superRefine((values, context) => {
   const callback = new URL(values.GOOGLE_REDIRECT_URI);
-  const frontend = new URL(values.CLIENT_URL);
   if (callback.pathname !== "/api/auth/google/callaback") {
     context.addIssue({ code: "custom", path: ["GOOGLE_REDIRECT_URI"], message: "Must end with /api/auth/google/callaback" });
-  }
-  if (callback.origin === frontend.origin) {
-    context.addIssue({ code: "custom", path: ["GOOGLE_REDIRECT_URI"], message: "Must point to the backend origin, not CLIENT_URL" });
   }
 });
 
 const parsed = envSchema.safeParse(process.env);
 if (!parsed.success) {
   const formatted = parsed.error.issues.map(({ path, message }) => `  - ${path.join(".")}: ${message}`).join("\n");
-  throw new Error(`Invalid server environment configuration:\n${formatted}\nSee server/.env.example. Secret values are not printed.`);
+  const setupHint = process.env.RENDER
+    ? "Set the values in your Render service's Environment settings, then redeploy. .env.example is only a template and is not loaded by Render."
+    : "For local development, copy server/.env.example to server/.env and set the values there.";
+  throw new Error(`Invalid server environment configuration:\n${formatted}\n${setupHint}\nSecret values are not printed.`);
 }
 
 export const env = Object.freeze({
