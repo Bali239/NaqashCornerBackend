@@ -51,7 +51,7 @@ Set this Vercel environment variable for **Production**:
 | --- | --- |
 | `NEXT_PUBLIC_API_URL` | `https://naqashcornerbackend.onrender.com` |
 
-`NEXT_PUBLIC_API_URL` is embedded in the client bundle at build time, so redeploy after changing it.
+`NEXT_PUBLIC_API_URL` is used by the client bundle and the Next.js `/api/*` rewrite at build time, so redeploy after changing it. The rewrite forwards API calls and OAuth callbacks from the Vercel domain to the Render backend; without it, a callback to the Vercel host returns Vercel's 404.
 
 ## 3. Finish Google OAuth configuration
 
@@ -61,7 +61,7 @@ In the Google Cloud OAuth web client, add this exact **Authorized redirect URI**
 https://naqashcornerbackend.onrender.com/api/auth/google/callaback
 ```
 
-The callback path intentionally retains the project's existing spelling `callaback`. This URL must use the Render backend host; `CLIENT_URL` is the Vercel frontend origin that receives the user after the callback. The OAuth client ID and secret belong in Render only; do not put the client secret in Vercel.
+The callback path intentionally retains the project's existing spelling `callaback`. Register the exact Render backend callback above with Google. If Google redirects to the Vercel host, the rewrite forwards that callback to Render, where the route is handled. `CLIENT_URL` is the Vercel frontend origin that receives the user after the callback. The OAuth client ID and secret belong in Render only; do not put the client secret in Vercel.
 
 After Vercel gives you the production URL, set that exact URL as Render's `CLIENT_URL` and redeploy the backend. This is also the allowed browser origin for the API's CORS policy. Then redeploy the frontend with the Render API URL and test `/health`, product listing, Google sign-in, and an admin sign-in.
 
