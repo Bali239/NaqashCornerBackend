@@ -3,7 +3,7 @@ import { sendSuccessResponse } from "../utils/Response.js";
 
 export const get = async (req, res) => sendSuccessResponse(res, {
   message: "Wishlist loaded.",
-  data: await wishlist.getWishlist(req.authUser.id),
+  data: await wishlist.getWishlist(req.authUser.id, req.validated.query),
 });
 
 export const add = async (req, res) => sendSuccessResponse(res, {
