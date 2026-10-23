@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   provider: { type: String, default: "google" },
   emailVerified: { type: Boolean, default: false },
   role: { type: String, enum: ["customer", "admin"], default: "customer", index: true },
+  wishlist: { type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }], default: [] },
   lastLoginAt: { type: Date, default: null },
 }, { timestamps: true });
 

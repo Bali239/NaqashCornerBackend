@@ -23,7 +23,5 @@ export const createCheckoutOrder = async (userId) => {
   }
   const subtotalMinor = items.reduce((sum, item) => sum + item.lineTotalMinor, 0);
   const order = await Order.create({ orderNumber: `NC-${Date.now().toString(36).toUpperCase()}-${randomBytes(3).toString("hex").toUpperCase()}`, user: userId, items, currency: items.length ? (await Product.findById(items[0].product).select("currency")).currency : "PKR", subtotalMinor, discountMinor: 0, totalMinor: subtotalMinor });
-  cart.items = [];
-  await cart.save();
   return order;
 };
