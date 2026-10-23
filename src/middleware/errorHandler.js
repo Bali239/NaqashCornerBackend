@@ -21,6 +21,9 @@ export const errorHandler = (error, req, res, _next) => {
   if (error?.name === "CastError") {
     return sendErrorResponse(res, { statusCode: 400, code: "INVALID_ID", message: "The supplied identifier is invalid.", requestId: req.id });
   }
+  if (error?.name === "ValidationError") {
+    return sendErrorResponse(res, { statusCode: 400, code: "VALIDATION_ERROR", message: "The submitted data is invalid.", details: Object.values(error.errors || {}).map((item) => ({ path: item.path, message: "Invalid value." })), requestId: req.id });
+  }
   if (error?.code === 11000) {
     return sendErrorResponse(res, { statusCode: 409, code: "DUPLICATE_RESOURCE", message: "A record with this value already exists.", requestId: req.id });
   }
