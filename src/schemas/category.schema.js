@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export const categoryListQuerySchema = z.object({
+  query: z.object({
+    q: z.string().trim().max(100).optional(),
+    limit: z.coerce.number().int().min(1).max(20).default(5),
+  }).strict(),
+});
+
 export const createCategorySchema = z.object({
   body: z.object({ name: z.string().trim().min(2).max(100), description: z.string().trim().max(1000).optional(), isActive: z.boolean().optional() }).strict(),
 });

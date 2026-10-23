@@ -3,7 +3,12 @@ import Product from "../models/Product.js";
 import AppError from "../utils/AppError.js";
 
 const slugify = (value) => value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-export const listCategories = ({ all = false } = {}) => Category.find(all ? {} : { isActive: true }).sort({ name: 1 }).lean();
+export const listCategories = ({ all = false, q = "", limit = 5 } = {}) => {
+  const query = all ? {} : { isActive: true };
+  if (q) query.name = new RegExp(`^${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i");
+  const sort = q ? { name: 1 } : { createdAt: -1, _id: -1 };
+  return Category.find(query).sort(sort).limit(limit).lean();
+};
 export const createCategory = async ({ name, ...input }) => Category.create({ name, slug: slugify(name), ...input });
 export const updateCategory = async (id, input) => {
   const category = await Category.findById(id);
