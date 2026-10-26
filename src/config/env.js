@@ -17,8 +17,16 @@ const envSchema = z.object({
   ADMIN_EMAILS: z.string().trim().min(1, "Add at least one email to ADMIN_EMAILS").refine((value) => value.split(",").every((email) => z.email().safeParse(email.trim()).success), "ADMIN_EMAILS must be a comma-separated list of valid emails"),
   STORE_CURRENCY: z.string().trim().length(3).default("PKR"),
   SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(7),
+  SHIPPING_FEE_MINOR: z.coerce.number().int().min(0).max(500000).default(0),
+  TAX_RATE_PERCENT: z.coerce.number().min(0).max(100).default(0),
   MAX_IMAGE_SIZE_BYTES: z.coerce.number().int().min(1024).max(20 * 1024 * 1024).default(5 * 1024 * 1024),
   MAX_PRODUCT_IMAGES: z.coerce.number().int().min(1).max(20).default(8),
+  SMTP_HOST: z.string().trim().optional().default(""),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).optional().default(587),
+  SMTP_SECURE: z.string().trim().optional().default("false"),
+  SMTP_USER: z.string().trim().optional().default(""),
+  SMTP_PASS: z.string().trim().optional().default(""),
+  SMTP_FROM: z.string().trim().optional().default(""),
 }).superRefine((values, context) => {
   const callback = new URL(values.GOOGLE_REDIRECT_URI);
   if (callback.pathname !== "/api/auth/google/callaback") {
