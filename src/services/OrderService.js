@@ -6,6 +6,7 @@ import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import AppError from "../utils/AppError.js";
 import { getIO } from "../lib/socket.js";
+import { createOrderNotification } from "./NotificationService.js";
 
 export const normalizePhoneNumber = (value) => {
   if (value == null) return "";
@@ -152,8 +153,21 @@ export const updateOrderStatus = async (orderId, adminUser, payload = {}) => {
     const io = getIO();
     io.to(`user:${order.user.toString()}`).emit("order:updated", updated);
     io.to(`order:${order._id.toString()}`).emit("order:updated", updated);
+    io.to("admins").emit("order:updated", updated);
+    const parts = [];
+    if (nextStatus) parts.push(`Order status updated to ${nextStatus}`);
+    if (payload.paymentStatus) parts.push(`Payment status updated to ${payload.paymentStatus}`);
+    if (parts.length) {
+      await createOrderNotification({
+        userId: order.user,
+        orderId: order._id,
+        orderNumber: order.orderNumber,
+        title: "Order update",
+        message: parts.join(" · "),
+      });
+    }
   } catch (error) {
-    // ignore socket errors
+    // ignore socket/errors
   }
   return updated;
 };

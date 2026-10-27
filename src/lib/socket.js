@@ -34,6 +34,9 @@ export const initSocket = (httpServer) => {
     if (userId) {
       socket.join(`user:${userId}`);
     }
+    if (socket.data.userRole === "admin") {
+      socket.join("admins");
+    }
     socket.on("order:subscribe", (orderId) => {
       if (orderId) socket.join(`order:${orderId}`);
     });

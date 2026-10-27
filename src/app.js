@@ -9,6 +9,7 @@ import categoriesRouter from "./routes/categories.js";
 import cartRouter from "./routes/cart.js";
 import ordersRouter from "./routes/orders.js";
 import wishlistRouter from "./routes/wishlist.js";
+import notificationsRouter from "./routes/notifications.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 import { sendSuccessResponse } from "./utils/Response.js";
 
@@ -29,6 +30,7 @@ app.use("/api/categories", categoriesRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/orders", ordersRouter);
 app.use("/api/wishlist", wishlistRouter);
+app.use("/api/notifications", notificationsRouter);
 app.get("/health", (_req, res) => sendSuccessResponse(res, { message: "Server is healthy.", data: { status: "ok" } }));
 app.use(notFoundHandler);
 app.use(errorHandler);
