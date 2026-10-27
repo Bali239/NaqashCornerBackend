@@ -5,6 +5,7 @@ import { env } from "../config/env.js";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import AppError from "../utils/AppError.js";
+import { getIO } from "../lib/socket.js";
 
 export const normalizePhoneNumber = (value) => {
   if (value == null) return "";
@@ -146,7 +147,15 @@ export const updateOrderStatus = async (orderId, adminUser, payload = {}) => {
   }
 
   await order.save();
-  return order.toObject();
+  const updated = order.toObject();
+  try {
+    const io = getIO();
+    io.to(`user:${order.user.toString()}`).emit("order:updated", updated);
+    io.to(`order:${order._id.toString()}`).emit("order:updated", updated);
+  } catch (error) {
+    // ignore socket errors
+  }
+  return updated;
 };
 
 export const createCheckoutOrder = async (userId, userEmail, payload = {}) => {
