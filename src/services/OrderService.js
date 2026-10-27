@@ -120,18 +120,9 @@ export const updateOrderStatus = async (orderId, adminUser, payload = {}) => {
 
   const nextStatus = payload.status;
   if (nextStatus) {
-    const allowed = {
-      placed: ["confirmed", "cancelled"],
-      confirmed: ["processing", "cancelled"],
-      processing: ["shipped", "cancelled"],
-      shipped: ["delivered", "returned"],
-      delivered: ["returned"],
-      cancelled: [],
-      returned: [],
-    };
-    const transitions = allowed[order.status] || [];
-    if (!transitions.includes(nextStatus)) {
-      throw new AppError("This order status transition is not allowed.", { statusCode: 400, code: "INVALID_STATUS_TRANSITION" });
+    const validStatuses = ["placed", "confirmed", "processing", "shipped", "delivered", "cancelled", "returned"];
+    if (!validStatuses.includes(nextStatus)) {
+      throw new AppError("The order status is invalid.", { statusCode: 400, code: "INVALID_ORDER_STATUS" });
     }
     order.status = nextStatus;
     order.statusHistory.push({ status: nextStatus, changedBy: adminUser?._id || adminUser?.id || null, note: payload.note || "Admin status update", at: new Date() });
