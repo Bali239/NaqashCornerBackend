@@ -17,9 +17,14 @@ export const initSocket = (httpServer) => {
 
   io.use(async (socket, next) => {
     try {
-      const token = socket.handshake.auth?.token || socket.handshake.query?.token;
-      if (!token || typeof token !== "string") return next(new Error("unauthorized"));
-      const session = await Session.findOne({ tokenHash: hashToken(token.trim()), expiresAt: { $gt: new Date() } }).populate("user");
+      const token =
+        socket.handshake.auth?.token || socket.handshake.query?.token;
+      if (!token || typeof token !== "string")
+        return next(new Error("unauthorized"));
+      const session = await Session.findOne({
+        tokenHash: hashToken(token.trim()),
+        expiresAt: { $gt: new Date() },
+      }).populate("user");
       if (!session?.user) return next(new Error("unauthorized"));
       socket.data.userId = session.user._id.toString();
       socket.data.userRole = session.user.role;

@@ -15,19 +15,37 @@ export const normalizePhoneNumber = (value) => {
   return `+92${formatted.replace(/\D/g, "").slice(1)}`;
 };
 
-export const calculateOrderTotals = ({ items = [], shippingFeeMinor = 0, taxRatePercent = 0 }) => {
-  const subtotalMinor = items.reduce((sum, item) => sum + Number(item.unitPriceMinor || 0) * (Number(item.quantity) || 0), 0);
+export const calculateOrderTotals = ({
+  items = [],
+  shippingFeeMinor = 0,
+  taxRatePercent = 0,
+}) => {
+  const subtotalMinor = items.reduce(
+    (sum, item) =>
+      sum + Number(item.unitPriceMinor || 0) * (Number(item.quantity) || 0),
+    0,
+  );
   const discountAmountMinor = items.reduce((sum, item) => {
     const unitPriceMinor = Number(item.unitPriceMinor || 0);
     const quantity = Number(item.quantity) || 0;
-    const discountPercent = Math.min(100, Math.max(0, Number(item.discountPercent || 0)));
-    const discountedUnitPrice = Math.round(unitPriceMinor * (100 - discountPercent) / 100);
+    const discountPercent = Math.min(
+      100,
+      Math.max(0, Number(item.discountPercent || 0)),
+    );
+    const discountedUnitPrice = Math.round(
+      (unitPriceMinor * (100 - discountPercent)) / 100,
+    );
     const lineSubtotal = unitPriceMinor * quantity;
     const lineDiscount = lineSubtotal - discountedUnitPrice * quantity;
     return sum + lineDiscount;
   }, 0);
-  const taxMinor = Math.round((subtotalMinor - discountAmountMinor + shippingFeeMinor) * (Number(taxRatePercent) || 0) / 100);
-  const totalMinor = subtotalMinor - discountAmountMinor + shippingFeeMinor + taxMinor;
+  const taxMinor = Math.round(
+    ((subtotalMinor - discountAmountMinor + shippingFeeMinor) *
+      (Number(taxRatePercent) || 0)) /
+      100,
+  );
+  const totalMinor =
+    subtotalMinor - discountAmountMinor + shippingFeeMinor + taxMinor;
 
   return {
     subtotalMinor,
@@ -40,18 +58,33 @@ export const calculateOrderTotals = ({ items = [], shippingFeeMinor = 0, taxRate
 
 export const validateOrderInputs = (payload = {}) => {
   const recipientName = String(payload.recipientName || "").trim();
-  if (recipientName.length < 2) throw new AppError("Recipient name is required.", { statusCode: 400, code: "INVALID_RECIPIENT_NAME" });
+  if (recipientName.length < 2)
+    throw new AppError("Recipient name is required.", {
+      statusCode: 400,
+      code: "INVALID_RECIPIENT_NAME",
+    });
 
   const normalizedPhone = normalizePhoneNumber(payload.phoneNumber);
   if (!normalizedPhone) {
-    throw new AppError("Enter your mobile number as 03xx-xxxxxxx.", { statusCode: 400, code: "INVALID_PHONE_NUMBER" });
+    throw new AppError("Enter your mobile number as 03xx-xxxxxxx.", {
+      statusCode: 400,
+      code: "INVALID_PHONE_NUMBER",
+    });
   }
 
   const address = String(payload.address || "").trim();
-  if (address.length < 5) throw new AppError("Enter a complete delivery address.", { statusCode: 400, code: "INVALID_ADDRESS" });
+  if (address.length < 5)
+    throw new AppError("Enter a complete delivery address.", {
+      statusCode: 400,
+      code: "INVALID_ADDRESS",
+    });
 
   const items = Array.isArray(payload.items) ? payload.items : [];
-  if (!items.length) throw new AppError("Please add at least one product to your order.", { statusCode: 400, code: "EMPTY_ORDER_ITEMS" });
+  if (!items.length)
+    throw new AppError("Please add at least one product to your order.", {
+      statusCode: 400,
+      code: "EMPTY_ORDER_ITEMS",
+    });
 
   return {
     idempotencyKey: String(payload.idempotencyKey || "").trim(),
@@ -59,20 +92,37 @@ export const validateOrderInputs = (payload = {}) => {
     phoneNumber: normalizedPhone,
     address,
     items: items.map((item) => {
-      if (!item || !item.productId) throw new AppError("Each order item must include a product ID.", { statusCode: 400, code: "INVALID_ITEM" });
-      if (!mongoose.isValidObjectId(item.productId)) throw new AppError("One or more product IDs are invalid.", { statusCode: 400, code: "INVALID_PRODUCT_ID" });
+      if (!item || !item.productId)
+        throw new AppError("Each order item must include a product ID.", {
+          statusCode: 400,
+          code: "INVALID_ITEM",
+        });
+      if (!mongoose.isValidObjectId(item.productId))
+        throw new AppError("One or more product IDs are invalid.", {
+          statusCode: 400,
+          code: "INVALID_PRODUCT_ID",
+        });
       const quantity = Number(item.quantity);
-      if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) throw new AppError("Each product quantity must be between 1 and 99.", { statusCode: 400, code: "INVALID_QUANTITY" });
+      if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99)
+        throw new AppError("Each product quantity must be between 1 and 99.", {
+          statusCode: 400,
+          code: "INVALID_QUANTITY",
+        });
       return { productId: String(item.productId), quantity };
     }),
   };
 };
 
-export const listOrders = (userId) => Order.find({ user: userId }).sort({ createdAt: -1 }).lean();
+export const listOrders = (userId) =>
+  Order.find({ user: userId }).sort({ createdAt: -1 }).lean();
 
 export const getOrder = async (userId, orderNumber) => {
   const order = await Order.findOne({ user: userId, orderNumber }).lean();
-  if (!order) throw new AppError("Order not found.", { statusCode: 404, code: "ORDER_NOT_FOUND" });
+  if (!order)
+    throw new AppError("Order not found.", {
+      statusCode: 404,
+      code: "ORDER_NOT_FOUND",
+    });
   return order;
 };
 
@@ -103,7 +153,11 @@ export const listOrdersForAdmin = async (filters = {}) => {
   }
 
   const total = await Order.countDocuments(query);
-  const items = await Order.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
+  const items = await Order.find(query)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
 
   return {
     items,
@@ -118,33 +172,69 @@ export const listOrdersForAdmin = async (filters = {}) => {
 
 export const updateOrderStatus = async (orderId, adminUser, payload = {}) => {
   const order = await Order.findById(orderId);
-  if (!order) throw new AppError("Order not found.", { statusCode: 404, code: "ORDER_NOT_FOUND" });
+  if (!order)
+    throw new AppError("Order not found.", {
+      statusCode: 404,
+      code: "ORDER_NOT_FOUND",
+    });
 
   const nextStatus = payload.status;
   if (nextStatus) {
-    const validStatuses = ["placed", "confirmed", "processing", "shipped", "delivered", "cancelled", "returned"];
+    const validStatuses = [
+      "placed",
+      "confirmed",
+      "processing",
+      "shipped",
+      "delivered",
+      "cancelled",
+      "returned",
+    ];
     if (!validStatuses.includes(nextStatus)) {
-      throw new AppError("The order status is invalid.", { statusCode: 400, code: "INVALID_ORDER_STATUS" });
+      throw new AppError("The order status is invalid.", {
+        statusCode: 400,
+        code: "INVALID_ORDER_STATUS",
+      });
     }
     order.status = nextStatus;
-    order.statusHistory.push({ status: nextStatus, changedBy: adminUser?._id || adminUser?.id || null, note: payload.note || "Admin status update", at: new Date() });
+    order.statusHistory.push({
+      status: nextStatus,
+      changedBy: adminUser?._id || adminUser?.id || null,
+      note: payload.note || "Admin status update",
+      at: new Date(),
+    });
   }
 
   if (payload.paymentStatus) {
     const valid = ["pending", "collected", "failed", "refunded"];
     if (!valid.includes(payload.paymentStatus)) {
-      throw new AppError("The payment status is invalid.", { statusCode: 400, code: "INVALID_PAYMENT_STATUS" });
+      throw new AppError("The payment status is invalid.", {
+        statusCode: 400,
+        code: "INVALID_PAYMENT_STATUS",
+      });
     }
     order.paymentStatus = payload.paymentStatus;
-    order.paymentHistory.push({ status: payload.paymentStatus, changedBy: adminUser?._id || adminUser?.id || null, note: payload.note || "Payment status update", at: new Date() });
+    order.paymentHistory.push({
+      status: payload.paymentStatus,
+      changedBy: adminUser?._id || adminUser?.id || null,
+      note: payload.note || "Payment status update",
+      at: new Date(),
+    });
   }
 
   if (payload.note && !nextStatus && !payload.paymentStatus) {
-    order.adminNotes.push({ text: payload.note, author: adminUser?._id || adminUser?.id || null, createdAt: new Date() });
+    order.adminNotes.push({
+      text: payload.note,
+      author: adminUser?._id || adminUser?.id || null,
+      createdAt: new Date(),
+    });
   }
 
   if (payload.note && (nextStatus || payload.paymentStatus)) {
-    order.adminNotes.push({ text: payload.note, author: adminUser?._id || adminUser?.id || null, createdAt: new Date() });
+    order.adminNotes.push({
+      text: payload.note,
+      author: adminUser?._id || adminUser?.id || null,
+      createdAt: new Date(),
+    });
   }
 
   await order.save();
@@ -156,7 +246,8 @@ export const updateOrderStatus = async (orderId, adminUser, payload = {}) => {
     io.to("admins").emit("order:updated", updated);
     const parts = [];
     if (nextStatus) parts.push(`Order status updated to ${nextStatus}`);
-    if (payload.paymentStatus) parts.push(`Payment status updated to ${payload.paymentStatus}`);
+    if (payload.paymentStatus)
+      parts.push(`Payment status updated to ${payload.paymentStatus}`);
     if (parts.length) {
       await createOrderNotification({
         userId: order.user,
@@ -175,34 +266,64 @@ export const updateOrderStatus = async (orderId, adminUser, payload = {}) => {
 export const createCheckoutOrder = async (userId, userEmail, payload = {}) => {
   const validated = validateOrderInputs(payload);
   const duplicate = validated.idempotencyKey
-    ? await Order.findOne({ user: userId, idempotencyKey: validated.idempotencyKey }).lean()
+    ? await Order.findOne({
+        user: userId,
+        idempotencyKey: validated.idempotencyKey,
+      }).lean()
     : null;
   if (duplicate) return duplicate;
 
-  const uniqueProductIds = [...new Set(validated.items.map((item) => item.productId))];
-  const productDocs = await Product.find({ _id: { $in: uniqueProductIds }, status: "published" }).lean();
+  const uniqueProductIds = [
+    ...new Set(validated.items.map((item) => item.productId)),
+  ];
+  const productDocs = await Product.find({
+    _id: { $in: uniqueProductIds },
+    status: "published",
+  }).lean();
   if (productDocs.length !== uniqueProductIds.length) {
-    throw new AppError("One or more products are unavailable or no longer published.", { statusCode: 409, code: "PRODUCT_UNAVAILABLE" });
+    throw new AppError(
+      "One or more products are unavailable or no longer published.",
+      { statusCode: 409, code: "PRODUCT_UNAVAILABLE" },
+    );
   }
 
-  const productMap = new Map(productDocs.map((product) => [product._id.toString(), product]));
+  const productMap = new Map(
+    productDocs.map((product) => [product._id.toString(), product]),
+  );
   const shippingFeeMinor = Number(env.SHIPPING_FEE_MINOR || 0);
   const taxRatePercent = Number(env.TAX_RATE_PERCENT || 0);
   const itemSnapshots = [];
 
   for (const item of validated.items) {
     const product = productMap.get(item.productId);
-    if (!product) throw new AppError("One or more products are unavailable.", { statusCode: 409, code: "PRODUCT_UNAVAILABLE" });
+    if (!product)
+      throw new AppError("One or more products are unavailable.", {
+        statusCode: 409,
+        code: "PRODUCT_UNAVAILABLE",
+      });
 
     if (product.trackInventory && product.availablePieces < item.quantity) {
-      throw new AppError(`Only ${product.availablePieces} units of ${product.name} are available.`, { statusCode: 409, code: "INSUFFICIENT_STOCK", details: { productId: item.productId, availableQuantity: product.availablePieces } });
+      throw new AppError(
+        `Only ${product.availablePieces} units of ${product.name} are available.`,
+        {
+          statusCode: 409,
+          code: "INSUFFICIENT_STOCK",
+          details: {
+            productId: item.productId,
+            availableQuantity: product.availablePieces,
+          },
+        },
+      );
     }
 
     const unitPriceMinor = Number(product.priceMinor || 0);
     const discountPercent = Number(product.discountPercent || 0);
-    const discountedUnitPriceMinor = Math.round(unitPriceMinor * (100 - discountPercent) / 100);
+    const discountedUnitPriceMinor = Math.round(
+      (unitPriceMinor * (100 - discountPercent)) / 100,
+    );
     const lineSubtotalMinor = unitPriceMinor * item.quantity;
-    const lineDiscountMinor = lineSubtotalMinor - discountedUnitPriceMinor * item.quantity;
+    const lineDiscountMinor =
+      lineSubtotalMinor - discountedUnitPriceMinor * item.quantity;
     const lineTotalMinor = discountedUnitPriceMinor * item.quantity;
 
     itemSnapshots.push({
@@ -220,7 +341,11 @@ export const createCheckoutOrder = async (userId, userEmail, payload = {}) => {
   }
 
   const totals = calculateOrderTotals({
-    items: itemSnapshots.map((item) => ({ unitPriceMinor: item.unitPriceMinor, quantity: item.quantity, discountPercent: item.discountPercent })),
+    items: itemSnapshots.map((item) => ({
+      unitPriceMinor: item.unitPriceMinor,
+      quantity: item.quantity,
+      discountPercent: item.discountPercent,
+    })),
     shippingFeeMinor,
     taxRatePercent,
   });
@@ -246,13 +371,29 @@ export const createCheckoutOrder = async (userId, userEmail, payload = {}) => {
     shippingFeeMinor: totals.shippingFeeMinor,
     taxMinor: totals.taxMinor,
     totalMinor: totals.totalMinor,
-    statusHistory: [{ status: "placed", changedBy: null, note: "Order placed by customer", at: new Date() }],
-    paymentHistory: [{ status: "pending", changedBy: null, note: "Cash on delivery pending", at: new Date() }],
-    adminNotes: [{
-      text: `New COD order ${orderNumber} received from ${validated.recipientName}.`,
-      author: null,
-      createdAt: new Date(),
-    }],
+    statusHistory: [
+      {
+        status: "placed",
+        changedBy: null,
+        note: "Order placed by customer",
+        at: new Date(),
+      },
+    ],
+    paymentHistory: [
+      {
+        status: "pending",
+        changedBy: null,
+        note: "Cash on delivery pending",
+        at: new Date(),
+      },
+    ],
+    adminNotes: [
+      {
+        text: `New COD order ${orderNumber} received from ${validated.recipientName}.`,
+        author: null,
+        createdAt: new Date(),
+      },
+    ],
   };
 
   const session = await mongoose.startSession();
@@ -261,7 +402,12 @@ export const createCheckoutOrder = async (userId, userEmail, payload = {}) => {
     let createdOrder = null;
     await session.withTransaction(async () => {
       if (validated.idempotencyKey) {
-        const existingIdempotency = await Order.findOne({ user: userId, idempotencyKey: validated.idempotencyKey }).session(session).lean();
+        const existingIdempotency = await Order.findOne({
+          user: userId,
+          idempotencyKey: validated.idempotencyKey,
+        })
+          .session(session)
+          .lean();
         if (existingIdempotency) {
           createdOrder = existingIdempotency;
           return;
@@ -271,17 +417,37 @@ export const createCheckoutOrder = async (userId, userEmail, payload = {}) => {
       for (const item of itemSnapshots) {
         if (!item.product) continue;
         const product = productMap.get(item.product.toString());
-        if (!product || (product.trackInventory && product.availablePieces < item.quantity)) {
-          throw new AppError(`Only ${product?.availablePieces ?? 0} units of ${product?.name || "this product"} are available.`, { statusCode: 409, code: "INSUFFICIENT_STOCK" });
+        if (
+          !product ||
+          (product.trackInventory && product.availablePieces < item.quantity)
+        ) {
+          throw new AppError(
+            `Only ${product?.availablePieces ?? 0} units of ${product?.name || "this product"} are available.`,
+            { statusCode: 409, code: "INSUFFICIENT_STOCK" },
+          );
         }
         if (product.trackInventory) {
           const result = await Product.updateOne(
-            { _id: item.product, status: "published", availablePieces: { $gte: item.quantity } },
+            {
+              _id: item.product,
+              status: "published",
+              availablePieces: { $gte: item.quantity },
+            },
             { $inc: { availablePieces: -item.quantity } },
             { session },
           );
           if (result.modifiedCount !== 1) {
-            throw new AppError(`Only ${product.availablePieces} units of ${product.name} are available.`, { statusCode: 409, code: "INSUFFICIENT_STOCK", details: { productId: item.product.toString(), availableQuantity: product.availablePieces } });
+            throw new AppError(
+              `Only ${product.availablePieces} units of ${product.name} are available.`,
+              {
+                statusCode: 409,
+                code: "INSUFFICIENT_STOCK",
+                details: {
+                  productId: item.product.toString(),
+                  availableQuantity: product.availablePieces,
+                },
+              },
+            );
           }
         }
       }
@@ -291,7 +457,13 @@ export const createCheckoutOrder = async (userId, userEmail, payload = {}) => {
       createdOrder = order.toObject();
     });
 
-    if (createdOrder?._id && process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS && env.ADMIN_EMAILS.length) {
+    if (
+      createdOrder?._id &&
+      process.env.SMTP_HOST &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASS &&
+      env.ADMIN_EMAILS.length
+    ) {
       const adminEmails = env.ADMIN_EMAILS || [];
       try {
         const transporter = nodemailer.createTransport({
@@ -307,7 +479,10 @@ export const createCheckoutOrder = async (userId, userEmail, payload = {}) => {
           text: `A new COD order has been placed.\nOrder Number: ${createdOrder.orderNumber}\nCustomer: ${createdOrder.recipientName}\nPhone: ${createdOrder.phoneNumber}\nEmail: ${createdOrder.customerEmail || "N/A"}\nAmount: PKR ${(createdOrder.totalMinor / 100).toFixed(2)}`,
         });
       } catch (error) {
-        console.error(`Unable to email admins about order ${createdOrder.orderNumber}:`, error);
+        console.error(
+          `Unable to email admins about order ${createdOrder.orderNumber}:`,
+          error,
+        );
       }
     }
 

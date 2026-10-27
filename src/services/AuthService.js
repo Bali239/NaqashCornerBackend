@@ -8,7 +8,9 @@ const hashToken = (token) => createHash("sha256").update(token).digest("hex");
 export const upsertGoogleUser = async (profile) => {
   const email = profile.email.toLowerCase();
   const isAdmin = env.ADMIN_EMAILS.includes(email);
-  let user = await User.findOne({ googleId: profile.sub }) || await User.findOne({ email });
+  let user =
+    (await User.findOne({ googleId: profile.sub })) ||
+    (await User.findOne({ email }));
   const values = {
     googleId: profile.sub,
     email,
@@ -29,7 +31,9 @@ export const upsertGoogleUser = async (profile) => {
 
 export const createSession = async (user, request) => {
   const token = randomBytes(32).toString("base64url");
-  const expiresAt = new Date(Date.now() + env.SESSION_TTL_DAYS * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(
+    Date.now() + env.SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
+  );
   await Session.create({
     tokenHash: hashToken(token),
     user: user._id,
@@ -50,4 +54,5 @@ export const publicUser = (user) => ({
   role: user.role,
 });
 
-export const revokeSession = async (token) => Session.deleteOne({ tokenHash: hashToken(token) });
+export const revokeSession = async (token) =>
+  Session.deleteOne({ tokenHash: hashToken(token) });
